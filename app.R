@@ -198,7 +198,7 @@ ui <- page_navbar(
                   numericInput("hidratacion", "Hidratación (%)", value = 65, min = 0, step = 1),
                   numericInput("sal", "Sal (%)", value = 3, min = 0, step = 0.1),
                   numericInput("levadura", "Levadura (%)", value = 0.3, min = 0, step = 0.01),
-                  numericInput("sobremasa", "Sobremasa (%)", value = 5, min = 0, step = 1))
+                  numericInput("sobremasa", "Merma (%)", value = 0, min = 0, step = 1))
             )
           ),
           seccion_switch(
@@ -342,11 +342,12 @@ ui <- page_navbar(
         tags$ul(
           tags$li(span("Cantidad de masas"), " y ", span("peso unitario"), " de cada una, en gramos."),
           tags$li(span("Hidratación, sal y levadura"), ": porcentajes sobre la harina."),
-          tags$li(span("Sobremasa"), ": porcentaje extra de masa que se prepara para ",
-                  "compensar lo que se pierde en el proceso. Se suma al peso total antes de calcular.")
+          tags$li(span("Merma"), ": porcentaje extra de masa que se prepara para ",
+                  "compensar lo que se pierde en el proceso. Se suma al peso total antes de calcular. ",
+                  "Por defecto es 0.")
         ),
         p("La tabla ", span("Resumen de la receta"), " muestra los gramos de harina, agua, sal y levadura, ",
-          "y el peso total de la masa a preparar (con la sobremasa incluida)."),
+          "y el peso total de la masa a preparar (con la merma incluida)."),
 
         h5("Apartados opcionales"),
         p("Cada uno tiene un interruptor. Al activarlo se despliegan sus campos y aparece su tabla ",
