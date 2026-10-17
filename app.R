@@ -143,7 +143,7 @@ tema <- bs_add_rules(tema, "
   .harinas-cab > div:last-child, .harina-base-pct { text-align: right; }
   .fila-harina .form-group { margin-bottom: .5rem; }
   .fila-harina input[type=number] { text-align: right; }
-  .harina-base-pct { padding: .45rem .75rem; color: var(--app-muted); }
+  .harina-base-pct { padding: .45rem .75rem; color: var(--app-muted); white-space: nowrap; }
   .harinas-acciones { display: flex; gap: 1.25rem; margin: .5rem 0; font-size: .9rem; }
   .harinas-acciones a { text-decoration: none; color: var(--app-accent); font-weight: 500; }
   .harinas-acciones a:hover { text-decoration: underline; }
@@ -204,6 +204,8 @@ ui <- page_navbar(
           seccion_switch(
             "usar_temp", "Temperatura del agua",
             div(class = "grid-2",
+                numericInput("temp_masa", "Masa deseada (°C)", value = TEMP_MASA_DEFECTO, step = 1),
+                numericInput("friccion", "Factor de fricción (°C)", value = FRICCION_DEFECTO, step = 1),
                 numericInput("temp_ambiente", "Ambiente (°C)", value = 22, step = 1),
                 numericInput("temp_harina", "Harina (°C)", value = 20, step = 1),
                 numericInput("temp_fria", "Agua fría (°C)", value = 15, step = 1),
@@ -350,15 +352,42 @@ ui <- page_navbar(
         p("Cada uno tiene un interruptor. Al activarlo se despliegan sus campos y aparece su tabla ",
           "de resultados; mientras esté apagado no se muestra nada."),
         tags$ul(
-          tags$li(span("Temperatura del agua"), ": indica la temperatura ambiente, la de la harina y las ",
-                  "temperaturas del agua fría y caliente que tienes. La app calcula la temperatura a la que ",
-                  "debe estar el agua para empezar el amasado (60 − T ambiente − T harina) y cuántos gramos ",
-                  "de agua fría y caliente mezclar para alcanzarla."),
+          tags$li(span("Temperatura del agua"), ": indica la temperatura que quieres para la masa, el factor ",
+                  "de fricción, la temperatura ambiente, la de la harina y las temperaturas del agua fría y ",
+                  "caliente que tienes. La app calcula la temperatura a la que debe estar el agua y cuántos ",
+                  "gramos de agua fría y caliente mezclar para alcanzarla (ver «Cálculo de las temperaturas»)."),
           tags$li(span("Mezcla de harinas"), ": escribe el nombre de cada harina y su porcentaje. La primera ",
                   "(base) no se edita: es el resto hasta 100 %. Por ejemplo, con 2 % de integral y 10 % de ",
                   "otra más fuerte, la base queda en 88 %. Puedes usar hasta 6 harinas."),
           tags$li(span("Distribución del agua en etapas"), ": indica qué porcentaje del agua va a la ",
                   "autólisis (harina y agua en reposo antes de amasar). El resto se añade en el amasado.")
+        ),
+
+        h5("Cálculo de las temperaturas"),
+        p("Temperatura del agua. Se usa el método de la temperatura deseada de la masa (",
+          tags$em("desired dough temperature"), "):"),
+        p(tags$code("T agua = (T masa deseada × 3) − (T ambiente + T harina + factor de fricción)")),
+        p("El 3 se debe a que se promedian tres temperaturas: agua, harina y ambiente. El factor de ",
+          "fricción es el calor que el amasado añade a la masa, así que depende de la amasadora y del ",
+          "tiempo de amasado. Como orientación, King Arthur Baking da unos 22–24 °F (12–13 °C) para ",
+          "una amasadora de pie durante unos 7 minutos y unos 6–8 °F (3–4 °C) para amasar a mano durante ",
+          "unos 8 minutos. Por defecto la app usa 24 °C de masa y 12 °C de fricción, que equivale a ",
+          "60 − T ambiente − T harina. Es una aproximación: no tiene en cuenta todas las variables, ",
+          "así que ajusta el factor de fricción midiendo la temperatura real de tu masa."),
+        p("Mezcla de agua fría y caliente. Sale de un balance de calor: el calor que cede el agua caliente ",
+          "es el que gana la fría, si no hay pérdidas hacia el entorno. Como las dos son agua, el ",
+          "calor específico se cancela y la temperatura final es el promedio ponderado por la masa:"),
+        p(tags$code("T final = (m fría × T fría + m caliente × T caliente) / (m fría + m caliente)")),
+        p("La app despeja de ahí los gramos de agua caliente y fría para llegar a la temperatura calculada. ",
+          "En la práctica el recipiente y el ambiente absorben algo de calor, y la temperatura del agua ",
+          "del grifo cambia, así que conviene comprobarla con un termómetro."),
+        p("Referencias:"),
+        tags$ul(
+          tags$li(tags$a("King Arthur Baking, «Desired dough temperature»", href = "https://www.kingarthurbaking.com/blog/2018/05/29/desired-dough-temperature", target = "_blank", rel = "noopener")),
+          tags$li(tags$a("Pizza Today, «Temperature Control»", href = "https://pizzatoday.com/news/temperature-control/130721/", target = "_blank", rel = "noopener")),
+          tags$li(tags$a("Pizza Today, «Dough Doctor: Get Wet»", href = "https://pizzatoday.com/?p=130903", target = "_blank", rel = "noopener")),
+          tags$li(tags$a("Pearson, «Calorimetry»", href = "https://pearson.com/channels/physics/learn/patrick/heat-temperature-and-kinetic-theory-of-gasses/calorimetry", target = "_blank", rel = "noopener")),
+          tags$li(tags$a("Physics Forums, «Formula: final temperature when mixing water with water»", href = "https://www.physicsforums.com/threads/135713", target = "_blank", rel = "noopener"))
         ),
 
         h5("Estimación porcentaje de levadura"),
@@ -459,9 +488,9 @@ server <- function(input, output, session) {
                      value = previo(paste0("harina_pct_", i), 0, i, "pct"),
                      min = 0, max = 100, step = 1)
       }
-      fluidRow(class = "fila-harina", column(8, nombre), column(4, pct))
+      fluidRow(class = "fila-harina", column(7, nombre), column(5, pct))
     })
-    cabecera <- fluidRow(class = "harinas-cab", column(8, "Harina"), column(4, "%"))
+    cabecera <- fluidRow(class = "harinas-cab", column(7, "Harina"), column(5, "%"))
     tagList(cabecera, filas)
   })
 
@@ -517,11 +546,12 @@ server <- function(input, output, session) {
   mezcla <- reactive({
     req(input$n_masas, input$peso_masa, input$hidratacion, input$sal, input$levadura,
         input$sobremasa, input$temp_ambiente, input$temp_harina,
-        input$temp_fria, input$temp_caliente)
+        input$temp_fria, input$temp_caliente, input$temp_masa, input$friccion)
     req(input$temp_caliente > input$temp_fria)
     total <- calcular_receta(input$n_masas, input$peso_masa, input$hidratacion,
                              input$sal, input$levadura, input$sobremasa)$Gramos[2]
-    final <- calcular_temp_agua(input$temp_ambiente, input$temp_harina)
+    final <- calcular_temp_agua(input$temp_ambiente, input$temp_harina,
+                                input$temp_masa, input$friccion)
     list(total = total, final = final,
          m = calcular_mezcla_agua(total, final, input$temp_fria, input$temp_caliente))
   })
@@ -596,6 +626,7 @@ server <- function(input, output, session) {
       sobremasa = input$sobremasa, autolisis = input$autolisis,
       temp_ambiente = input$temp_ambiente, temp_harina = input$temp_harina,
       temp_fria = input$temp_fria, temp_caliente = input$temp_caliente,
+      temp_masa = input$temp_masa, friccion = input$friccion,
       temp_fermentacion = input$temp, horas_fermentacion = input$horas,
       tipo_levadura = input$tipo_levadura,
       usar_temp = as.numeric(isTRUE(input$usar_temp)),
@@ -625,6 +656,9 @@ server <- function(input, output, session) {
     e <- sel[[1]]$entradas
     for (campo in names(INPUTS_NUMERICOS)) {
       updateNumericInput(session, INPUTS_NUMERICOS[[campo]], value = e[[campo]])
+    }
+    for (k in names(CAMPOS_NUMERICOS_OPCIONALES)) {
+      updateNumericInput(session, k, value = numero_opcional(e, k))
     }
     updateSelectInput(session, "tipo_levadura", selected = e$tipo_levadura)
     # Recetas guardadas antes de existir los interruptores: se muestran activados

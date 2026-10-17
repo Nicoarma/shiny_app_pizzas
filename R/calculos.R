@@ -18,9 +18,17 @@ calcular_receta <- function(n_masas, peso_masa, hidratacion, sal, levadura, sobr
 
 MAX_HARINAS <- 6
 
-# Temperatura del agua para iniciar el amasado: 60 - T ambiente - T harina
-calcular_temp_agua <- function(temp_ambiente, temp_harina, constante = 60) {
-  constante - temp_ambiente - temp_harina
+# Temperatura del agua para que la masa termine en la temperatura deseada (DDT,
+# "desired dough temperature"):
+#   T agua = (DDT × 3) − (T ambiente + T harina + factor de fricción)
+# El 3 es por las tres temperaturas que se promedian (agua, harina y ambiente); el
+# factor de fricción es el calor que añade el amasado y depende de la amasadora.
+# Con los valores por defecto (24 y 12) equivale a la fórmula anterior, 60 − ambiente − harina.
+TEMP_MASA_DEFECTO <- 24
+FRICCION_DEFECTO <- 12
+calcular_temp_agua <- function(temp_ambiente, temp_harina,
+                               temp_masa = TEMP_MASA_DEFECTO, friccion = FRICCION_DEFECTO) {
+  temp_masa * 3 - (temp_ambiente + temp_harina + friccion)
 }
 
 # Mezcla de agua fría (T1) y caliente (T2) para alcanzar una temperatura final.

@@ -14,6 +14,12 @@ CAMPOS_ENTRADA <- c(
 CAMPOS_OPCIONALES <- c("usar_temp", "usar_autolisis", "usar_harinas")
 TIPOS_VALIDOS <- c("instantanea", "fresca", "seca_activa")
 
+# Campos numéricos añadidos después (temperatura deseada de la masa y factor de
+# fricción). Tampoco son obligatorios; si faltan se usan estos valores, que dan la
+# misma fórmula de antes (24 × 3 − 12 = 60).
+CAMPOS_NUMERICOS_OPCIONALES <- c(temp_masa = TEMP_MASA_DEFECTO, friccion = FRICCION_DEFECTO)
+numero_opcional <- function(e, k) e[[k]] %||% CAMPOS_NUMERICOS_OPCIONALES[[k]]
+
 # Valor por defecto si x es NULL
 `%||%` <- function(x, y) if (is.null(x)) y else x
 MAX_NOMBRE <- 80
@@ -33,7 +39,8 @@ nuevo_id <- function() {
 calcular_resultados <- function(e) {
   r <- calcular_receta(e$n_masas, e$peso_masa, e$hidratacion, e$sal,
                        e$levadura, e$sobremasa)$Gramos
-  temp_agua <- calcular_temp_agua(e$temp_ambiente, e$temp_harina)
+  temp_agua <- calcular_temp_agua(e$temp_ambiente, e$temp_harina,
+                                  numero_opcional(e, "temp_masa"), numero_opcional(e, "friccion"))
   mezcla <- if (e$temp_caliente == e$temp_fria) {
     c(fria = NA_real_, caliente = NA_real_)
   } else {
@@ -66,6 +73,9 @@ receta_valida <- function(r) {
   if (e$n_masas < 1 || e$peso_masa <= 0 || e$horas_fermentacion <= 0) return(FALSE)
   for (k in CAMPOS_OPCIONALES) {
     if (!is.null(e[[k]]) && !(es_numero(e[[k]]) && e[[k]] %in% c(0, 1))) return(FALSE)
+  }
+  for (k in names(CAMPOS_NUMERICOS_OPCIONALES)) {
+    if (!is.null(e[[k]]) && !es_numero(e[[k]])) return(FALSE)
   }
   h <- e$harinas
   if (!is.list(h) || length(h) < 1 || length(h) > MAX_HARINAS) return(FALSE)
@@ -104,6 +114,8 @@ historial_a_excel <- function(hist, path) {
                     e[CAMPOS_ENTRADA], list(tipo_levadura = e$tipo_levadura),
                     lapply(setNames(CAMPOS_OPCIONALES, CAMPOS_OPCIONALES),
                            function(k) valor_opcional(e, k)),
+                    lapply(setNames(names(CAMPOS_NUMERICOS_OPCIONALES), names(CAMPOS_NUMERICOS_OPCIONALES)),
+                           function(k) numero_opcional(e, k)),
                     res),
                   stringsAsFactors = FALSE)
   })
@@ -134,7 +146,7 @@ excel_a_historial <- function(path) {
     h <- h[order(h$orden), , drop = FALSE]
     entradas <- lapply(rec[i, CAMPOS_ENTRADA], function(v) suppressWarnings(as.numeric(v)))
     entradas$tipo_levadura <- rec$tipo_levadura[i]
-    for (k in intersect(CAMPOS_OPCIONALES, names(rec))) {
+    for (k in intersect(c(CAMPOS_OPCIONALES, names(CAMPOS_NUMERICOS_OPCIONALES)), names(rec))) {
       v <- suppressWarnings(as.numeric(rec[[k]][i]))
       if (!is.na(v)) entradas[[k]] <- v
     }
