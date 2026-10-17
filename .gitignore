@@ -1,0 +1,12 @@
+# Notas personales de la investigación del modelo de levadura
+notas_investigacion.txt
+
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+.Renviron
+rsconnect/
+renv/library/
