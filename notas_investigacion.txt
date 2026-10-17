@@ -1,0 +1,72 @@
+NOTAS DE INVESTIGACION - MODELO DE LEVADURA (shiny_pizzas)
+Fecha: 2026-10-17
+
+OBJETIVO
+Calcular el % de levadura (porcentaje panadero sobre la harina) segun la
+temperatura de fermentacion y las horas. Referencia inicial: calculadora de
+Pizzablab (https://www.pizzablab.com/calculators/pizza-dough-calculator-guide/).
+
+1) PIZZABLAB / TXCRAIG1
+- La guia de Pizzablab NO publica la formula. Dice que usa un "modelo predictivo
+  de actividad de la levadura" de TXCraig1, refinado por el autor.
+- Hilo original (2013) en pizzamaking.com: "Baker's yeast quantity prediction
+  model", de TXCraig1. Construido a partir de dos estudios de S. cerevisiae y
+  ajustado con datos reales de levadura de panaderia. Tmax = 45 C y tres
+  coeficientes (a, b, c). Valido ~16-26 C (60-78 F), 4-48 h; extrapolado a ~35-37 C.
+- En 2025 el autor dijo que cambio los coeficientes al hacer una version de 48 h.
+- Su hoja "Will See" (regla tipo Q10: actividad x2 por cada 15 F, "horas
+  efectivas") no se distribuye.
+- Enlaces: https://www.pizzamaking.com/forum/index.php?msg=271528
+           https://www.pizzamaking.com/forum/index.php?msg=511605
+           https://www.pizzamaking.com/forum/index.php?msg=822607
+- PROBLEMA: el foro devuelve 403 a las peticiones automaticas. No se pudieron
+  leer los coeficientes.
+- PENDIENTE: abrir el hilo en el navegador y copiar ecuacion/coeficientes (o la
+  tabla del grafico) para integrarlos o ajustar con ellos.
+
+2) TABLAS DE BLOGS (levadura instantanea, % sobre harina)
+- Mismo dia, temp. ambiente, 4-8 h: 0.3-0.8 % (mypizzanight: 0.5-0.8 % a 22 C
+  4-6 h; fond.kitchen: 0.3-0.5 % a 20-26 C 4-8 h).
+- 12-18 h: 0.15-0.3 % (0.2-0.3 % a 18 C).
+- 24 h en frio: 0.1-0.15 % (dough.school) hasta 0.2-0.3 % (mypizzanight) y
+  0.3-0.5 % (flourwise). Es donde mas discrepan.
+- 48 h frio: ~0.10-0.15 %. 72 h frio: ~0.05-0.08 %.
+- Temperatura: ~x2 de velocidad por cada 8-10 C (fond.kitchen); reducir 20-30 %
+  la levadura en cocina de 25 C+ frente a una de 17 C (mypizzanight).
+- Equivalencias: fresca ~ 3x instantanea; seca activa ~ 1.25x (usado en la app).
+- Masas con >5 % de azucar: 1.5-2x la levadura calculada (comentario del autor
+  de Pizzablab).
+- Fuentes:
+  https://mypizzanight.com/guides/pizza-dough-yeast-calculator
+  https://www.dough.school/guides/yeast-calculator
+  https://fond.kitchen/guides/pizza-dough/pizza-dough-fermentation/
+  https://flourwise.com/pizza-calculator/
+  https://pizzaplan.app/en/room-temperature-fermentation/
+  https://www.crustkingdom.com/how-much-yeast-in-pizza-dough/
+
+3) BIOLOGIA DE LA LEVADURA
+- Estudio 2011 (https://pmc.ncbi.nlm.nih.gov/articles/PMC3067424): temperaturas
+  cardinales de 27 cepas. S. cerevisiae: Topt ~32.3 C, Tmax ~45.4 C, Tmin media
+  ~2.8 C (muy variable entre cepas).
+- No se encontraron datos de Q10 ni cinetica en masa de pan/pizza.
+
+4) AJUSTE REALIZADO (R, minimos cuadrados sobre log(% levadura))
+Puntos usados (horas, C, % instantanea): (5,22,0.5) (6,22,0.6) (8,24,0.4)
+(14,19,0.2) (16,18,0.25) (24,20,0.1) (24,4,0.2) (48,4,0.125) (48,4,0.125)
+(72,4,0.065). Son valores centrales tomados a ojo de las tablas, no mediciones.
+- Modelo CTMI (Topt 32.3, Tmax 45.4, Tmin libre): error 1.81. Malo en frio
+  (sobreestima levadura); Tmin se fue al limite del rango.
+- Modelo exponencial: error 0.27. Ajuste:
+    % = 0.13 * (24/horas) * 1.39^((20 - T)/10)
+  Q10 = 1.39 es bajo porque las tablas de frio incluyen tiempo a temp. ambiente
+  y la masa tarda en enfriarse.
+- APLICADO en app.R: REF_PCT = 0.13, Q10 = 1.39.
+  Ejemplos: 24 h/20 C = 0.13 %; 48 h/4 C ~ 0.10 %; 8 h/25 C ~ 0.29 %.
+
+5) PROXIMOS PASOS
+- Conseguir la ecuacion de TXCraig1 (abrir el hilo a mano).
+- Registrar fermentaciones propias (temp., horas, % levadura, resultado) y
+  reajustar el modelo con ellas; pesan mas que las tablas genericas.
+- Considerar modelo con dos fases para frio (calentamiento + nevera).
+- Ideas de la app: prefermento (poolish/biga), ajuste por azucar/grasa,
+  guardar recetas.
