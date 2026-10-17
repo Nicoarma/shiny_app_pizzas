@@ -25,55 +25,129 @@ Shiny.addCustomMessageHandler('hist_save', function(v) {
 });
 "
 
-# Tema neutro (blancos y grises). Las fuentes son del sistema (sin descargas),
-# así que la app no depende de internet al publicarse.
+# Tema "claro moderno" con modo oscuro. Los colores de la app son variables (--app-*)
+# que cambian con data-bs-theme, para que el botón de modo oscuro de bslib los
+# actualice todos. Las fuentes son del sistema (sin descargas), así que la app no
+# depende de internet al publicarse.
 tema <- bs_theme(
   version = 5,
-  bg = "#FFFFFF", fg = "#212529",
-  primary = "#343A40", secondary = "#6C757D", success = "#495057",
-  base_font = font_collection("system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"),
-  "border-radius" = "0.75rem",
-  "card-border-color" = "#DEE2E6"
+  bg = "#F4F5F7", fg = "#16181D",
+  primary = "#4F46E5",
+  base_font = font_collection("Segoe UI", "system-ui", "-apple-system", "Roboto", "sans-serif"),
+  "border-radius" = "0.75rem"
 )
 tema <- bs_add_rules(tema, "
-  body { background: #F8F9FA; }
-  .navbar { box-shadow: 0 1px 6px rgba(33, 37, 41, .12); }
-  .navbar-brand { font-weight: 700; }
-  .card { background: #FFFFFF; box-shadow: 0 1px 3px rgba(33, 37, 41, .08); }
-  /* Jerarquía: el título de la tarjeta es más grande y oscuro que los encabezados
-     de columna, que se quedan como estaban (grises, tamaño normal) */
-  .card-header { font-size: 1.2rem; font-weight: 700; color: #212529; background: transparent; }
-  .shiny-table th { color: #6C757D; font-weight: 600; }
-  /* Tablas de la pestaña Receta: mismo ancho, columnas fijas y cifras alineadas
-     con su encabezado (renderTable fija text-align y width en línea, de ahí !important) */
-  .tablas-receta table.shiny-table { width: 100% !important; table-layout: fixed; margin-bottom: 0; }
+  :root, [data-bs-theme=light] {
+    --app-bg: #F4F5F7; --app-surface: #FFFFFF; --app-surface2: #F8F9FB; --app-line: #E6E8EC;
+    --app-muted: #6B7280; --app-accent: #4F46E5; --app-accent-soft: #EEF0FF;
+    --app-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 4px 16px rgba(16, 24, 40, .06);
+  }
+  [data-bs-theme=dark] {
+    --app-bg: #0F1115; --app-surface: #181B21; --app-surface2: #1E222A; --app-line: #2A2F39;
+    --app-muted: #9AA1AE; --app-accent: #818CF8; --app-accent-soft: #23264A;
+    --app-shadow: 0 0 0 1px #232834;
+    --bs-body-bg: #0F1115; --bs-body-color: #ECEEF2; --bs-border-color: #2A2F39;
+  }
+  body { background: var(--app-bg); }
+  hr { border-color: var(--app-line); opacity: 1; }
+
+  /* Navegación: pestaña activa en píldora */
+  .navbar { background: var(--app-surface) !important; border-bottom: 1px solid var(--app-line);
+    box-shadow: none; }
+  .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -.2px; }
+  /* Pestaña activa: negrita y color de acento (sin línea ni fondo) */
+  .navbar .nav-link { border-radius: 0; padding: .5rem .9rem; color: var(--app-muted);
+    border-bottom: 0 !important; box-shadow: none !important; }
+  .navbar .nav-link:hover { color: var(--bs-body-color); }
+  .navbar .navbar-nav .nav-link.active, .navbar .nav-link.active { background: transparent !important;
+    color: var(--app-accent) !important; font-weight: 700 !important; box-shadow: none !important; }
+
+  /* Tarjetas */
+  .card { background: var(--app-surface); border: 0; border-radius: 1rem;
+    box-shadow: var(--app-shadow); }
+  /* bslib da a .card-header un tamaño y peso más específicos; de ahí !important */
+  .card .card-header { font-size: 1.2rem !important; font-weight: 700 !important;
+    letter-spacing: -.2px; color: inherit; background: transparent; border-bottom: 0;
+    padding: 1.25rem 1.5rem .25rem; }
+  /* Cuerpo de las tarjetas alineado con su título; las tablas lo anulan más abajo */
+  .card .card-body { padding: .5rem 1.5rem 1.5rem; }
+  .card h6 { font-weight: 700; font-size: 1rem; margin: 1.25rem 0 .4rem; }
+  .card h6:first-child { margin-top: 0; }
+  /* bslib separa los hijos del cuerpo con un gap propio que se sumaba a los márgenes */
+  .texto-explicativo .card-body { font-size: .95rem; gap: 0 !important; }
+  .texto-explicativo p { margin-bottom: .6rem; }
+  #levadura_resultado h2 { font-weight: 700; margin: 0 0 .25rem; }
+  #levadura_resultado p { margin: 0; color: var(--app-muted); }
+
+  /* Tablas de la pestaña Método directo: mismo ancho, columnas fijas y cifras
+     alineadas con su encabezado (renderTable fija text-align y width en línea, de
+     ahí los !important) */
+  .tablas-receta .card-body { padding: 0 0 .5rem; }
+  .tablas-receta table.shiny-table { width: 100% !important; table-layout: fixed; margin: .5rem 0 0;
+    --bs-table-bg: transparent; --bs-table-color: inherit; }
+  /* Shiny fija su propio relleno en las celdas (table-spacing-s), de ahí !important */
+  /* Encabezados de columna: mismo tamaño y color que los valores, en negrita */
+  .shiny-table th { font-weight: 700; font-size: inherit; color: inherit;
+    padding: .65rem 1.5rem !important; border-bottom: 1px solid var(--app-line); }
+  .shiny-table td { padding: .7rem 1.5rem !important; border-top: 0;
+    border-bottom: 1px solid var(--app-line); }
+  .shiny-table tbody tr:last-child td { border-bottom: 0; }
   .tablas-receta .shiny-table th:first-child, .tablas-receta .shiny-table td:first-child {
     width: 45%; text-align: left !important; }
   .tablas-receta .shiny-table th:not(:first-child), .tablas-receta .shiny-table td:not(:first-child) {
-    text-align: right !important; }
-  .accordion-button:not(.collapsed) { background: #F1F3F5; color: #212529; }
-  /* Barra lateral: acordeones y secciones con interruptor con el mismo aspecto */
-  .sidebar .accordion { --bs-accordion-border-width: 0; border: 1px solid #DEE2E6;
-    border-radius: .75rem; overflow: hidden; background: #FFFFFF; }
-  .seccion-switch { border: 1px solid #DEE2E6; border-radius: .75rem; background: #FFFFFF;
+    text-align: right !important; font-variant-numeric: tabular-nums; }
+  /* Última fila destacada en las tablas que terminan en un total */
+  .tabla-total .shiny-table tbody tr:last-child td { font-weight: 700; background: var(--app-surface2); }
+  .valor-destacado { display: inline-block; padding: .1rem .65rem; border-radius: 999px;
+    background: var(--app-accent-soft); color: var(--app-accent); font-weight: 600; font-size: .85rem; }
+  .tablas-receta .help-block { padding: 0 1.5rem .75rem; margin: 0; }
+
+  /* Barra lateral: tarjetas sin marco de panel */
+  .bslib-sidebar-layout { --_sidebar-bg: transparent; --_border-color: transparent;
+    border: 0 !important; background: transparent !important; box-shadow: none; }
+  .bslib-sidebar-layout > .sidebar { background: transparent; border: 0; }
+  .secciones-lateral { display: flex; flex-direction: column; gap: .75rem; }
+  .secciones-lateral .accordion, .secciones-lateral .seccion-switch { margin: 0; width: 100%;
+    background: var(--app-surface); border: 0; border-radius: 1rem; box-shadow: var(--app-shadow);
     overflow: hidden; }
-  .secciones-lateral { display: flex; flex-direction: column; gap: .5rem; }
-  .secciones-lateral .accordion, .secciones-lateral .seccion-switch { margin: 0; width: 100%; }
+  .sidebar .accordion { --bs-accordion-border-width: 0; --bs-accordion-bg: transparent;
+    --bs-accordion-active-bg: transparent; --bs-accordion-active-color: inherit;
+    --bs-accordion-btn-focus-box-shadow: none; --bs-accordion-btn-padding-x: 1.25rem;
+    --bs-accordion-body-padding-x: 1.25rem; }
+  .sidebar .accordion-button { font-weight: 600; box-shadow: none; }
   .seccion-switch-cab { display: flex; justify-content: space-between; align-items: center;
-    gap: 1rem; padding: 1rem 1.25rem; min-height: 3.5rem; }
+    gap: 1rem; padding: 1rem 1.25rem; min-height: 3.5rem; font-weight: 600; }
   /* El título ocupa el espacio libre y solo salta de línea si no cabe; el
      interruptor mantiene su tamaño y queda pegado a la derecha. Shiny da 300 px
      al contenedor del input y Bootstrap le deja un margen izquierdo de 2.5em,
      de ahí los !important. */
-  .seccion-switch-titulo { font-size: 1rem; flex: 1 1 auto; min-width: 0; }
+  .seccion-switch-titulo { flex: 1 1 auto; min-width: 0; }
   .seccion-switch .shiny-input-container { flex: 0 0 auto; width: auto !important;
     max-width: none; margin: 0 0 0 auto; }
   .seccion-switch .form-check, .seccion-switch .form-switch { padding-left: 0 !important;
     margin: 0 0 0 auto; min-height: 0; }
   .seccion-switch .form-check-input { float: none; margin: 0 !important; }
-  .seccion-switch-cuerpo { padding: 1rem 1.25rem 0.5rem; border-top: 1px solid #DEE2E6; }
-  .btn-outline-secondary { margin-right: .25rem; }
-  .form-group { margin-bottom: .6rem; }
+  .seccion-switch-cuerpo { padding: 1rem 1.25rem .5rem; border-top: 1px solid var(--app-line); }
+
+  /* Campos: fondo suave, esquinas moderadas, dos por fila */
+  .form-control, .form-select, .selectize-input { border-radius: .5rem;
+    background-color: var(--app-surface2); border-color: var(--app-line); }
+  .control-label, .shiny-input-container > label { font-size: .8rem; font-weight: 500;
+    color: var(--app-muted); margin-bottom: .25rem; }
+  .form-group { margin-bottom: .75rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 .75rem; }
+  .grid-2 .shiny-input-container { width: 100%; margin-bottom: .75rem; }
+
+  /* Mezcla de harinas */
+  .harinas-cab { color: var(--app-muted); font-size: .8rem; font-weight: 600; margin-bottom: .25rem; }
+  .harinas-cab > div:last-child, .harina-base-pct { text-align: right; }
+  .fila-harina .form-group { margin-bottom: .5rem; }
+  .fila-harina input[type=number] { text-align: right; }
+  .harina-base-pct { padding: .45rem .75rem; color: var(--app-muted); }
+  .harinas-acciones { display: flex; gap: 1.25rem; margin: .5rem 0; font-size: .9rem; }
+  .harinas-acciones a { text-decoration: none; color: var(--app-accent); font-weight: 500; }
+  .harinas-acciones a:hover { text-decoration: underline; }
+  .help-block { color: var(--app-muted); }
 ")
 
 # Sección de la barra lateral con interruptor en la cabecera: al activarlo se
@@ -118,27 +192,29 @@ ui <- page_navbar(
             id = "acc_params", open = "masa",
             accordion_panel(
               "Parámetros receta", value = "masa",
-              numericInput("n_masas", "Cantidad de masas", value = 4, min = 1, step = 1),
-              numericInput("peso_masa", "Peso unitario de cada masa (g)", value = 260, min = 1, step = 10),
-              numericInput("hidratacion", "Hidratación (%)", value = 65, min = 0, step = 1),
-              numericInput("sal", "Sal (%)", value = 3, min = 0, step = 0.1),
-              numericInput("levadura", "Levadura (%)", value = 0.3, min = 0, step = 0.01),
-              numericInput("sobremasa", "Sobremasa por mermas (%)", value = 5, min = 0, step = 1)
+              div(class = "grid-2",
+                  numericInput("n_masas", "Cantidad de masas", value = 4, min = 1, step = 1),
+                  numericInput("peso_masa", "Peso unitario (g)", value = 260, min = 1, step = 10),
+                  numericInput("hidratacion", "Hidratación (%)", value = 65, min = 0, step = 1),
+                  numericInput("sal", "Sal (%)", value = 3, min = 0, step = 0.1),
+                  numericInput("levadura", "Levadura (%)", value = 0.3, min = 0, step = 0.01),
+                  numericInput("sobremasa", "Sobremasa (%)", value = 5, min = 0, step = 1))
             )
           ),
           seccion_switch(
             "usar_temp", "Temperatura del agua",
-            numericInput("temp_ambiente", "Temperatura ambiente (°C)", value = 22, step = 1),
-            numericInput("temp_harina", "Temperatura de la harina (°C)", value = 20, step = 1),
-            numericInput("temp_fria", "Agua fría disponible (°C)", value = 15, step = 1),
-            numericInput("temp_caliente", "Agua caliente disponible (°C)", value = 100, step = 1)
+            div(class = "grid-2",
+                numericInput("temp_ambiente", "Ambiente (°C)", value = 22, step = 1),
+                numericInput("temp_harina", "Harina (°C)", value = 20, step = 1),
+                numericInput("temp_fria", "Agua fría (°C)", value = 15, step = 1),
+                numericInput("temp_caliente", "Agua caliente (°C)", value = 100, step = 1))
           ),
           seccion_switch(
             "usar_harinas", "Mezcla de harinas",
-            helpText("Nombre y % de cada harina. La base es el resto hasta 100 %."),
             uiOutput("harinas_ui"),
-            actionButton("add_harina", "+ Añadir harina", class = "btn-sm btn-outline-secondary"),
-            actionButton("del_harina", "− Quitar", class = "btn-sm btn-outline-secondary")
+            div(class = "harinas-acciones",
+                actionLink("add_harina", "+ Añadir harina"),
+                actionLink("del_harina", "− Quitar última"))
           ),
           seccion_switch(
             "usar_autolisis", "Distribución del agua en etapas",
@@ -165,18 +241,22 @@ ui <- page_navbar(
       sidebar = sidebar(
         width = 360,
         open = list(desktop = "open", mobile = "always-above"),
-        selectInput("tipo_levadura", "Tipo de levadura", TIPOS_LEVADURA),
+        selectInput("tipo_levadura", "Tipo de levadura", TIPOS_LEVADURA, selectize = FALSE),
         numericInput("temp", "Temperatura de fermentación (°C)", value = 20, min = 1, max = 40, step = 1),
+        helpText("~4 °C si fermenta en la nevera", style = "margin-top: -.4rem;"),
         numericInput("horas", "Horas de fermentación", value = 24, min = 1, step = 1),
-        helpText("Temperatura ambiente, o ~4 °C si fermenta en la nevera."),
         actionButton("aplicar", "Usar en la receta", class = "btn-primary")
       ),
-      card(
-        card_header("Levadura recomendada"),
-        uiOutput("levadura_resultado"),
-        hr(),
-        div(
-          class = "small",
+      layout_columns(
+        col_widths = 12, fill = FALSE,
+        card(
+          card_header("Levadura recomendada"),
+          uiOutput("levadura_resultado")
+        ),
+        card(
+          class = "texto-explicativo",
+          card_header("Cómo se calcula"),
+          card_body(
           h6("Fórmula"),
           p("Porcentaje de levadura instantánea sobre el peso de harina:"),
           p(tags$code(sprintf(
@@ -188,11 +268,11 @@ ui <- page_navbar(
             " su temperatura en °C. Para otros tipos de levadura el resultado se multiplica por ",
             sprintf("%g (fresca) o %g (seca activa).",
                     FACTOR_LEVADURA[["fresca"]], FACTOR_LEVADURA[["seca_activa"]])),
+          h6("Alcance del modelo"),
           p("Es un modelo empírico simplificado: las dos constantes se ajustaron por mínimos ",
             "cuadrados (en logaritmos) a unos 10 valores centrales de tablas publicadas, no a ",
             "mediciones propias. Con ellas, 24 h a 20 °C dan ",
-            format(REF_PCT, decimal.mark = ","), " %. Está pensado para masas sin azúcar ni grasa ",
-            "en exceso; con más de 5 % de azúcar conviene usar 1,5–2 veces más levadura. ",
+            format(REF_PCT, decimal.mark = ","), " %. ",
             "Úsalo como punto de partida y ajústalo con tu experiencia."),
           h6("Referencias"),
           tags$ul(
@@ -210,6 +290,7 @@ ui <- page_navbar(
                     tags$a("PMC3067424", href = "https://pmc.ncbi.nlm.nih.gov/articles/PMC3067424", target = "_blank", rel = "noopener"),
                     ")")
           )
+          )
         )
       )
     )
@@ -225,7 +306,7 @@ ui <- page_navbar(
         textInput("hist_nombre", "Nombre de la receta", placeholder = "Ej.: Napolitana 24 h"),
         actionButton("hist_guardar", "Guardar receta actual", class = "btn-primary"),
         hr(),
-        selectInput("hist_sel", "Receta guardada", choices = character(0)),
+        selectInput("hist_sel", "Receta guardada", choices = character(0), selectize = FALSE),
         actionButton("hist_cargar", "Cargar", class = "btn-sm btn-outline-secondary"),
         actionButton("hist_eliminar", "Eliminar", class = "btn-sm btn-outline-secondary"),
         hr(),
@@ -244,6 +325,7 @@ ui <- page_navbar(
 
   nav_panel(
     "Instrucciones de uso", value = "instrucciones",
+    # (el botón de modo oscuro está al final de la barra, tras nav_spacer)
     div(
       class = "mx-auto", style = "max-width: 820px;",
       card(
@@ -258,10 +340,10 @@ ui <- page_navbar(
         tags$ul(
           tags$li(span("Cantidad de masas"), " y ", span("peso unitario"), " de cada una, en gramos."),
           tags$li(span("Hidratación, sal y levadura"), ": porcentajes sobre la harina."),
-          tags$li(span("Sobremasa por mermas"), ": porcentaje extra de masa que se prepara para ",
+          tags$li(span("Sobremasa"), ": porcentaje extra de masa que se prepara para ",
                   "compensar lo que se pierde en el proceso. Se suma al peso total antes de calcular.")
         ),
-        p("La tabla ", span("Ingredientes"), " muestra los gramos de harina, agua, sal y levadura, ",
+        p("La tabla ", span("Resumen de la receta"), " muestra los gramos de harina, agua, sal y levadura, ",
           "y el peso total de la masa a preparar (con la sobremasa incluida)."),
 
         h5("Apartados opcionales"),
@@ -300,7 +382,10 @@ ui <- page_navbar(
         p("Próximamente.")
       )
     )
-  )
+  ),
+
+  nav_spacer(),
+  nav_item(input_dark_mode(id = "modo_oscuro"))
 )
 
 server <- function(input, output, session) {
@@ -313,16 +398,21 @@ server <- function(input, output, session) {
     res
   })
 
-  # Tablas visibles: Ingredientes siempre; el resto según lo que el usuario activó.
+  # Tablas visibles: Resumen de la receta siempre; el resto según lo que el usuario activó.
   # Solo depende de los interruptores, no de los valores.
   output$tablas <- renderUI({
-    tarjetas <- list(card(card_header("Ingredientes"), tableOutput("receta")))
+    # Las tablas que terminan en una fila de total van en un div "tabla-total"
+    # para destacar esa última fila
+    tarjetas <- list(card(card_header("Resumen de la receta"),
+                          div(class = "tabla-total", tableOutput("receta"))))
     if (isTRUE(input$usar_harinas)) {
       tarjetas <- c(tarjetas, list(card(card_header("Mezcla de harinas"),
-                                        tableOutput("harinas_tabla"), uiOutput("harinas_aviso"))))
+                                        div(class = "tabla-total", tableOutput("harinas_tabla")),
+                                        uiOutput("harinas_aviso"))))
     }
     if (isTRUE(input$usar_autolisis)) {
-      tarjetas <- c(tarjetas, list(card(card_header("Agua por etapas"), tableOutput("agua_etapas"))))
+      tarjetas <- c(tarjetas, list(card(card_header("Agua por etapas"),
+                                        div(class = "tabla-total", tableOutput("agua_etapas")))))
     }
     if (isTRUE(input$usar_temp)) {
       tarjetas <- c(tarjetas, list(card(card_header("Temperatura del agua"),
@@ -363,15 +453,16 @@ server <- function(input, output, session) {
                           placeholder = "Tipo de harina")
       # La primera fila (base) no se edita: es 100 - suma de las demás
       pct <- if (i == 1) {
-        div(style = "padding-top: 7px;", strong(textOutput("harina_base_pct", inline = TRUE)))
+        div(class = "harina-base-pct", textOutput("harina_base_pct", inline = TRUE))
       } else {
         numericInput(paste0("harina_pct_", i), NULL,
                      value = previo(paste0("harina_pct_", i), 0, i, "pct"),
                      min = 0, max = 100, step = 1)
       }
-      fluidRow(column(7, nombre), column(5, pct))
+      fluidRow(class = "fila-harina", column(8, nombre), column(4, pct))
     })
-    tagList(filas)
+    cabecera <- fluidRow(class = "harinas-cab", column(8, "Harina"), column(4, "%"))
+    tagList(cabecera, filas)
   })
 
   harinas <- reactive({
@@ -395,9 +486,9 @@ server <- function(input, output, session) {
     h <- harinas()
     total <- calcular_receta(input$n_masas, input$peso_masa, input$hidratacion,
                              input$sal, input$levadura, input$sobremasa)$Gramos[1]
-    data.frame(Harina = h$Harina,
-               `%` = sprintf("%.1f %%", h$pct),
-               Gramos = sprintf("%.1f g", total * h$pct / 100),
+    data.frame(Harina = c(h$Harina, "Total"),
+               `%` = sprintf("%.1f %%", c(h$pct, sum(h$pct))),
+               Gramos = sprintf("%.1f g", c(total * h$pct / 100, total * sum(h$pct) / 100)),
                check.names = FALSE)
   })
 
@@ -439,11 +530,13 @@ server <- function(input, output, session) {
     x <- mezcla()
     data.frame(
       Concepto = c("Temperatura del agua", "Agua total", "Agua fría", "Agua caliente"),
-      Valor = c(sprintf("%.1f °C", x$final), sprintf("%.1f g", x$total),
+      # La temperatura va en una etiqueta destacada (HTML generado aquí, no del usuario)
+      Valor = c(sprintf("<span class='valor-destacado'>%.1f °C</span>", x$final),
+                sprintf("%.1f g", x$total),
                 sprintf("%.1f g (a %g °C)", x$m[["fria"]], input$temp_fria),
                 sprintf("%.1f g (a %g °C)", x$m[["caliente"]], input$temp_caliente))
     )
-  })
+  }, sanitize.text.function = function(x) x)
 
   output$mezcla_aviso <- renderUI({
     x <- mezcla()
